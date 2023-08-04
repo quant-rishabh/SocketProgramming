@@ -22,8 +22,6 @@ int main()
         std::cout << "wsa initilized by windows" << endl;
     }
 
-    
-    
     // Initialize the socket
     int nSocket = socket(AF_INET , SOCK_STREAM,IPPROTO_TCP);
     if (nSocket >= 0) std::cout << "it is working";
@@ -32,7 +30,7 @@ int main()
 
     //initlize the enviroment for sockaddr sturcture
     srv.sin_family = AF_INET;
-    srv.sin_family = htons(PORT); //HOST TO NETWORK SOCKS NETWORK BYTE ORDER REQURIED AT THE TIME OF NETWORK CALL
+    srv.sin_port = htons(PORT); //HOST TO NETWORK SOCKS NETWORK BYTE ORDER REQURIED AT THE TIME OF NETWORK CALL
     srv.sin_addr.s_addr = INADDR_ANY; // assigning address to s addr
     memset(&(srv.sin_zero), 0, 8);
 
@@ -41,11 +39,27 @@ int main()
     nRet = bind(nSocket, (sockaddr*)&srv, sizeof(sockaddr));
 
     if (nRet < 0) {
-        cout << endl << "fail to bind the local port";
+        cout << endl << nRet << "  fail to bind the local port";
         exit(EXIT_FAILURE);
     }
     else {
         cout << endl << "The socket opened successfully" << nSocket;
     }
-     
+
+    //listen the request from cloent(queues the requeuests)
+    //backlog , how many requeust can client can make to server
+
+    nRet = listen(nSocket, 5);
+
+    if (nRet < 0) {
+        cout << endl << "Fail to start listen to slocal port";
+        exit(EXIT_FAILURE);
+
+    }
+    else {
+        cout << endl << "started listening to local port";
+    }
+
+    // keep waiting for new req
+
 }
