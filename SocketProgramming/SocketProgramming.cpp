@@ -12,6 +12,8 @@ struct sockaddr_in srv;
 int main()
 {   // Initialize the wsa variables
 
+    int nRet = 0;
+
     WSADATA ws;
     if (WSAStartup(MAKEWORD(2, 2), &ws)< 0) {
         std::cout << "wsa data not working";
@@ -35,5 +37,15 @@ int main()
     memset(&(srv.sin_zero), 0, 8);
 
     // bind the socket to local port
+
+    nRet = bind(nSocket, (sockaddr*)&srv, sizeof(sockaddr));
+
+    if (nRet < 0) {
+        cout << endl << "fail to bind the local port";
+        exit(EXIT_FAILURE);
+    }
+    else {
+        cout << endl << "The socket opened successfully" << nSocket;
+    }
      
 }
