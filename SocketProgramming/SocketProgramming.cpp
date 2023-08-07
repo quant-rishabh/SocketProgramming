@@ -9,6 +9,11 @@ using namespace std;
 
 struct sockaddr_in srv;
 
+int nMaxFd;
+
+//socket descriptor just like file descriptor which is loaded by the the kernal object
+fd_set fr, fw, fe;
+ 
 int main()
 {   // Initialize the wsa variables
 
@@ -43,7 +48,7 @@ int main()
         exit(EXIT_FAILURE);
     }
     else {
-        cout << endl << "The socket opened successfully" << nSocket;
+        cout << endl << "The socket opened successfully" << " " << nSocket;
     }
 
     //listen the request from cloent(queues the requeuests)
@@ -61,5 +66,38 @@ int main()
     }
 
     // keep waiting for new req
+    
+    while (1) {
+        //The select() call monitors activity on a set of sockets looking for sockets ready for reading, writing, or with an exception condition pending.
+        nMaxFd = nSocket;
 
+        timeval tv;
+
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        FD_ZERO(&fr);
+        FD_ZERO(&fw);
+        FD_ZERO(&fe);
+
+        FD_SET(nSocket, &fr);
+        FD_SET(nSocket, &fe);
+
+
+
+        nRet = select(nMaxFd + 1, &fr, &fw, &fe, &tv);
+
+        if (nRet > 0) {
+
+        }
+        else if (nRet == 0) {
+            cout << "nothing on the port :" << PORT << endl;
+        }
+        else {
+            cout << "failed" << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        Sleep(2000);
+  }
 }
