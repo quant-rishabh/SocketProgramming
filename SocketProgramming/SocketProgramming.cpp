@@ -5,14 +5,86 @@
 #include <winsock.h>
 #define PORT 9909
 
+void ProcessNewMessage(int);
+
 using namespace std;
 
 struct sockaddr_in srv;
+
+int nSocket;
 
 int nMaxFd;
 
 //socket descriptor just like file descriptor which is loaded by the the kernal object
 fd_set fr, fw, fe;
+int nArrClient[5];
+
+
+void ProcessTheNewRequest() {
+
+    //new connection requeuest 
+
+
+    if (FD_ISSET(nSocket, &fr)) {
+        int nLen = sizeof(struct sockaddr);
+        int nClientSocket = accept(nSocket, NULL , &nLen);
+
+        if (nClientSocket > 0) {
+            int nIndex;
+            for (nIndex = 0; nIndex < 5; nIndex++) {
+                if (nArrClient[nIndex] == 0) {
+                    nArrClient[nIndex] = nClientSocket;
+
+                    send(nClientSocket,"got the connection done successfully", 37, 0);
+                    break;
+                }
+            }
+
+            if (nIndex == 5) cout << endl << "no space for a new connection";
+        }
+    }
+    else {
+        for (int nIndex = 0; nIndex < 5; nIndex++) {
+            if ( FD_ISSET(nArrClient[nIndex], &fr)) {
+                // got he new message from the client
+                //just recv new message
+                // just queu that for new workeds for your server to fulfull the req
+                ProcessNewMessage(nArrClient[nIndex]);
+            }
+        }
+    }
+
+}
+
+void ProcessNewMessage(int nClientSocket) {
+    cout << endl << "Processing the new message fo client socket : " << nClientSocket;
+    char buff[256 + 1] = { 0, };
+
+    int nRet = recv(nClientSocket, buff, 256, 0);
+
+    if (nRet < 0) {
+        cout << endl << " something wrong happend .. closing the connection for client";
+
+        // if client closes the app then it returns -1
+        closesocket(nClientSocket);
+
+        for (int nIndex = 0; nIndex < 5; nIndex++) {
+            if (nArrClient[nIndex] == nClientSocket) {
+                nArrClient[nIndex] = 0;
+                break;
+
+            }
+        }
+        
+    }
+
+    else {
+        cout << endl << "the message receieved from client is : " << buff;
+        send(nClientSocket, "processed your requeust", 23, 0);
+        cout << endl << "**************************************";
+    }
+
+}
  
 int main()
 {   // Initialize the wsa variables
@@ -28,7 +100,7 @@ int main()
     }
 
     // Initialize the socket
-    int nSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    nSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (nSocket >= 0) std::cout << "it is working";
 
 
@@ -126,11 +198,39 @@ int main()
         FD_SET(nSocket, &fr);
         FD_SET(nSocket, &fe);
 
+        for (int nIndex = 0; nIndex < 5; nIndex++) {
+            if (nArrClient[nIndex] !=0) {
+                FD_SET(nArrClient[nIndex], &fr);
+                FD_SET(nArrClient[nIndex], &fe);
+            }
+        }
 
 
         nRet = select(nMaxFd + 1, &fr, &fw, &fe, &tv);
 
         if (nRet > 0) {
+            /*
+            
+            
+            cout << "processing data ....... done processing....." << endl;
+            if (FD_ISSET(nSocket, &fe)) {
+                cout << endl << "there is an exception. Just get away from here";
+            }
+            if (FD_ISSET(nSocket, &fw)) {
+                cout << endl << "ready to write something";
+            }
+
+            if (FD_ISSET(nSocket, &fr)) {
+                cout << endl << "ready to read something";
+                    //accept the new connection
+
+
+            }
+            */
+
+            ProcessTheNewRequest();
+            
+
 
         }
         else if (nRet == 0) {
@@ -146,3 +246,9 @@ int main()
   }
 }
 
+
+
+// server is now handling one by one rather then simultaneously 
+// it accumulates in the queue 
+//to overcome we could you multithreading to process each client using thread
+// using time slice to progress 
